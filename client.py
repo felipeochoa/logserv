@@ -17,17 +17,17 @@ class SocketForwarder(logging.handlers.SocketHandler):
 
     """
 
-    def __init__(self, host, port=None, **kwargs):
-        if port is not None:
-            raise TypeError("%s does not take a 'port' argument")
+    version_str = "1.0"
     max_line_length = 10240
+
+    def __init__(self, host, port, timeout=None, **kwargs):
         self.shook_hands = False
         self.kwargs = kwargs
-        super().__init__(self, host, port)
         if timeout is None:
             self.timeout = socket.getdefaulttimeout()
         else:
             self.timeout = timeout
+        super().__init__(host, port)
 
     def createSocket(self):
         """
@@ -74,7 +74,7 @@ class SocketForwarder(logging.handlers.SocketHandler):
                                        resp[6:],)
         params = {'--level': self.level}
         params.update(self.kwargs)
-        param_json = json.dumps(params)
+        param_json = json.dumps(params) + '\n'
         self.sendtext('IDENTIFY %s' % param_json)
         resp = self.recv_line()
         if resp != 'OK\n':
