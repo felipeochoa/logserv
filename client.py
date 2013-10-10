@@ -30,15 +30,10 @@ class SocketForwarder(logging.handlers.SocketHandler):
         self.doHandshake()
         return s
 
-    def sendall(self, data):
+    def sendtext(self, data):
         if isinstance(data, str):
             data = data.encode('UTF-8')
-        left = len(data)
-        sentsofar = 0
-        while left > 0:
-            sent = self.sock.send(data[sentsofar:])
-            sentsofar = sentsofar + sent
-            left = left - sent
+        self.send(data)
 
     def recv_until(self, terminator, decode=True):
         resp = ['']
@@ -56,8 +51,8 @@ class SocketForwarder(logging.handlers.SocketHandler):
         return resp
 
     def doHandshake(self):
-        self.sendall('HELLO\n')
         resp = self.recv_until('\n')
+        self.sendtext('HELLO %s\n' % self.version_str)
         if not resp.startswith('HELLO '):
             raise ProtocolError('"HELLO <version>\n"', resp)
         elif resp[6:] != '1.0\n':
@@ -66,8 +61,8 @@ class SocketForwarder(logging.handlers.SocketHandler):
         params = {'--level': self.level}
         params.update(self.kwargs)
         param_json = json.dumps(params)
-        self.sendall('IDENTIFY %s' % param_json)
         resp = self.recv_until('\n')
+        self.sendtext('IDENTIFY %s' % param_json)
         if resp != 'OK\n':
             raise ProtocolError("'OK\n'", resp)
         self.shook_hands = True
