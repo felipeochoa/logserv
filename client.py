@@ -80,3 +80,7 @@ class SocketForwarder(logging.handlers.SocketHandler):
         if resp != 'OK\n':
             raise ProtocolError("'OK\n'", resp)
         self.shook_hands = True
+        self.sendtext('LOG\n')
+        resp = self.recv_line()
+        if resp != 'OK\n':
+            raise ProtocolError("'OK\n'", resp)
