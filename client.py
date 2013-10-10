@@ -63,7 +63,7 @@ class SocketForwarder(logging.handlers.SocketHandler):
         elif resp[6:] != '1.0\n':
             raise VersionMismatchError("Handler does not support version %s",
                                        resp[6:],)
-        params = {'lvl': self.level}
+        params = {'--level': self.level}
         params.update(self.kwargs)
         param_json = json.dumps(params)
         self.sendall('IDENTIFY %s' % param_json)

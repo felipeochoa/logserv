@@ -26,8 +26,8 @@ on the same pickle-based protocol used in SocketHandler:
 
   where <params> is a JSON-serialized dict with certain requirements:
 
-  * <params> must contain the key 'lvl'
-  * <params>['lvl'] must be an acceptable argument for `setLevel`.
+  * <params> must contain the key '--level'
+  * <params>['--level'] must be an acceptable argument for `setLevel`.
   * The remaining keys in <params> are passed to the 'RotatingFileHandler'
     constructor to create the handler that will accept the client's logging
     requests.
