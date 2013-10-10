@@ -1,6 +1,7 @@
 import json
 import logging
 import socket
+import time
 import unittest
 from unittest import mock
 
@@ -36,6 +37,8 @@ class TestClient(utils.Patches, unittest.TestCase):
         self.s.send.reset_mock()
         self.s.sendtext('Test bytes'.encode('UTF-8'))
         self.s.send.assert_called_once_with('Test bytes'.encode('UTF-8'))
+
+    # test for recv_line in its own test case
 
     def test_handshake_ok(self):
         responses = [(s + '\n') for s in ['HELLO 1.0', 'OK', 'OK']]
@@ -91,20 +94,26 @@ class Test_Recv_Line(TestClient):
             [s.encode('UTF-8') for s in responses] +
             [AssertionError("Called recv too many times!")])
 
-    def test_recv_line_working(self):
+    def test_line_working(self):
         self.set_responses(('this i', 's A t', 'est', '!\n'))
         line = self.s.recv_line()
         self.assertEqual(line, 'this is A test!\n')
 
-    def test_recv_line_multiple_messages(self):
-        # More than one message queued up:
+    def test_line_multiple_messages(self):
         # The client only expects server messages in response to its own
         # messages, therefore a second queued message signifies trouble!
         self.set_responses(['tes', 'st #1\ntest2\n'])
         self.assertRaises(ProtocolError, self.s.recv_line)
 
-    def test_recv_line_too_long(self):
-        self.set_responses(['abcd123456'] * 130)
+    def test_line_too_long(self):
+        self.set_responses(['abcd123456'] * 1025)
+        self.assertRaises(ProtocolError, self.s.recv_line)
+
+    def test_responses_too_slow(self):
+        self.s.timeout = 1
+        self.s.sock.recv.side_effect = lambda _: time.sleep(.2) or b'a'
+        self.assertRaises(socket.timeout, self.s.recv_line)
+
         self.assertRaises(ProtocolError, self.s.recv_line)
 
 if __name__ == "__main__":
