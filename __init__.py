@@ -85,8 +85,12 @@ on the same pickle-based protocol used in SocketHandler:
 
          'QUIT\n'
 
-* Except for the `len-bytes` and `pickle-data` transmissions, all text MUST
-  be encoded in UTF-8
+  Additional notes:
+
+  * Except for the `len-bytes` and `pickle-data` transmissions, all text MUST
+    be encoded in UTF-8.
+  * Clients and servers are not required to support more messages more than
+    10 KiB (10240 bytes) long.
 
 """
 class LogServerError(Exception):
