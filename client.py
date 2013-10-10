@@ -41,7 +41,7 @@ class SocketForwarder(logging.handlers.SocketHandler):
             data = data.encode('UTF-8')
         self.send(data)
 
-    def recv_line(self, decode=True):
+    def recv_line(self):
         resp = [b'']
         resp_len = 0
         terminator = '\n'.encode('UTF-8')
@@ -56,8 +56,10 @@ class SocketForwarder(logging.handlers.SocketHandler):
             resp.append(data)
             resp_len += len(data)
         resp = b''.join(resp)
-        if decode:
+        try:
             resp = resp.decode('UTF-8')
+        except UnicodeDecodeError:
+            raise ProtocolError("a UTF-8 encoded message", resp)
         other = resp.split('\n', 1)[1]
         if other:
             raise ProtocolError("a %s-terminated message" % terminator,

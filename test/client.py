@@ -89,10 +89,15 @@ class Test_Recv_Line(TestClient):
         self.s.sock = mock.MagicMock()
         self.s.sock.recv = mock.MagicMock()
 
-    def set_responses(self, responses):
-        self.s.sock.recv.side_effect = iter(
-            [s.encode('UTF-8') for s in responses] +
-            [AssertionError("Called recv too many times!")])
+    def set_responses(self, responses, encode=True):
+        if encode:
+            self.s.sock.recv.side_effect = iter(
+                [s.encode('UTF-8') for s in responses] +
+                [AssertionError("Called recv too many times!")])
+        else:
+            self.s.sock.recv.side_effect = iter(
+                list(responses) +
+                [AssertionError("Called recv too many times!")])
 
     def test_line_working(self):
         self.set_responses(('this i', 's A t', 'est', '!\n'))
@@ -114,6 +119,8 @@ class Test_Recv_Line(TestClient):
         self.s.sock.recv.side_effect = lambda _: time.sleep(.2) or b'a'
         self.assertRaises(socket.timeout, self.s.recv_line)
 
+    def test_invalid_utf8(self):
+        self.set_responses([b'\xC0', '\n'.encode('UTF-8')], False)
         self.assertRaises(ProtocolError, self.s.recv_line)
 
 if __name__ == "__main__":
