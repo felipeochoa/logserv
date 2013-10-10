@@ -22,13 +22,12 @@ class SocketForwarder(logging.handlers.SocketHandler):
         self.kwargs = kwargs
         super().__init__(self, host, port)
 
-    def makeSocket(self, timeout=1):
+    def createSocket(self):
         """
-        Makes a socket and performs the handshake with the server.
+        Creates a socket and performs the handshake with the server.
         """
-        s = super().makeSocket(timeout)
+        super().createSocket()
         self.doHandshake()
-        return s
 
     def sendtext(self, data):
         if isinstance(data, str):
