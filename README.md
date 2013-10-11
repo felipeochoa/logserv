@@ -29,32 +29,36 @@ INET).
 You need to run the logging server(s) in a separate process or thread,
 launched through the `asyncore.loop` function:
 
-    import asyncore
-    from logserv import server
-    s = server.LogServer(("localhost", 9876))
-    asyncore.loop(map=server.LogServer.logging_map)
+```python
+import asyncore
+from logserv import server
+s = server.LogServer(("localhost", 9876))
+asyncore.loop(map=server.LogServer.logging_map)
+```
 
 In any client applications, you only need to change your use of
 `RotatingFileHandler` objects for instances of `SocketForwarder` (for
 INET setups) or `UnixClient` (for UNIX setups), giving these the
 address of the server as an additional parameter:
 
-    LOGGING = {"version": 1,
-         # etc.
-         "handlers": {
-             "old_rotating_file_handler_1": {
-                 "class": "logserv.client.SocketForwarder",
-                 "host": "localhost",
-                 "port": 9876,
-                 "formatters":  # must use the built in
-                                # `loggging.Formatter`,
-                                # if any
-                 # all the other parameters stay the same
-                 "filename": ...,
-                 "maxBytes": ...,
-             }
+```python
+LOGGING = {"version": 1,
+     # etc.
+     "handlers": {
+         "old_rotating_file_handler_1": {
+             "class": "logserv.client.SocketForwarder",
+             "host": "localhost",
+             "port": 9876,
+             "formatters":  # must use the built in
+                            # `loggging.Formatter`,
+                            # if any
+             # all the other parameters stay the same
+             "filename": ...,
+             "maxBytes": ...,
          }
-    }
+     }
+}
+```
 
 ## Using UNIX sockets:
 
@@ -62,11 +66,13 @@ To use the server over Unix Domain sockets, override
 the `server.LogServer.socket_family` parameter in the class before
 creating the first server:
 
-    import asyncore, socket
-    from logserv import server
-    server.LogServer.socket_family = socket.AF_UNIX
-    s = server.LogServer('/full/path/to/test.sock')
-    asyncore.loop(map=server.LogServer.logging_map)
+```python
+import asyncore, socket
+from logserv import server
+server.LogServer.socket_family = socket.AF_UNIX
+s = server.LogServer('/full/path/to/test.sock')
+asyncore.loop(map=server.LogServer.logging_map)
+```
 
 In the client, you just need to replace references
 to `logserv.client.SocketForwarder` with references
