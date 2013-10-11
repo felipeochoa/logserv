@@ -8,6 +8,7 @@ handles each connection's state and file handler.
 
 import asyncore
 import json
+import logging
 import pickle
 import socket
 import struct
@@ -147,26 +148,6 @@ class LoggingChannel(StrictDispatcher):
             self.write_buf = 'OK\n'
             self.status = 'WAITING'
 
-    def set_format(self):
-        msg = self.find_term()
-        if msg is not None:
-            head, rest = msg.split(' ')
-            if head == 'LOG\n':  # rest is blank
-                self.status = 'LOG-HEADER'
-                self.write_buf = 'OK\n'
-            elif head == 'FORMAT':
-                try:
-                    params = json.loads(rest)
-                except ValueError:
-                    raise ProtocolError("a JSON object", rest)
-                try:
-                    formatter = logging.Formatter(**params)
-                except TypeError as err:
-                    raise ProtocolError("valid parameters for "
-                                        "logging.Formatter", err.args[0])
-                self.handler.setFormatter(formatter)
-                self.status = 'WAITING'
-
     def confirm_log(self):
         msg = self.find_term()
         if msg is not None:
@@ -207,8 +188,35 @@ class LoggingChannel(StrictDispatcher):
             else:
                 self.handler.emit(log_record)
 
-    def quit(self):
-        self.close()
+    def receive_msg(self):
+        msg = self.find_term()
+        if msg is not None:
+            head = msg.split(' ', 1)[0]
+            if head == 'FORMAT':
+                try:
+                    rest = msg.split(' ', 1)[1]
+                    params = json.loads(rest)
+                except ValueError:
+                    raise ProtocolError("a valid JSON object", rest)
+                if not isinstance(params, dict):
+                    raise ProtocolError("a JSON dict",
+                                        "a " + params.__class__.__name__)
+                self.format(**params)
+            elif head == 'QUIT\n':
+                self.close()
+            else:
+                raise ProtocolError("One of 'FORMAT' or 'QUIT'",
+                                    msg)
+
+    def format(self, fmt=None, datefmt=None, style='%'):
+        formatter = logging.Formatter(fmt, datefmt, style=style)
+        self.handler.setFormatter(formatter)
+        self.write_buf = 'OK\n'
+
+    def close(self):
+        super().close()
+        self.read_buf = []
+        self.write_buf = b''
 
 
 class LogServer(StrictDispatcher):
