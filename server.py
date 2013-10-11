@@ -202,7 +202,11 @@ class LoggingChannel(StrictDispatcher):
                 if not isinstance(params, dict):
                     raise ProtocolError("a JSON dict",
                                         "a " + params.__class__.__name__)
-                self.format(**params)
+                try:
+                    self.format(**params)
+                except TypeError as e:
+                    raise ProtocolError("valid formatter parameters",
+                                        e.args[0])
             elif head == 'QUIT\n':
                 self.close()
             else:
