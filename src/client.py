@@ -1,9 +1,17 @@
 import json
+import logging
 import logging.handlers
 import socket
 import time
 
 from . import ProtocolError, VersionMismatchError
+
+_REVERSE_STYLES = {
+    logging.PercentStyle: '%',
+    logging.StrFormatStyle: '{',
+    logging.StringTemplateStyle: '$',
+}
+
 
 class SocketForwarder(logging.handlers.SocketHandler):
 
@@ -35,6 +43,7 @@ class SocketForwarder(logging.handlers.SocketHandler):
         """
         super().createSocket()
         self.doHandshake()
+        self.sendFormat()
 
     def sendtext(self, data):
         if isinstance(data, str):
@@ -81,11 +90,22 @@ class SocketForwarder(logging.handlers.SocketHandler):
         resp = self.recv_line()
         if resp != 'OK\n':
             raise ProtocolError("'OK\n'", resp)
-        self.shook_hands = True
         self.sendtext('LOG\n')
         resp = self.recv_line()
         if resp != 'OK\n':
             raise ProtocolError("'OK\n'", resp)
+        self.shook_hands = True
+
+    def sendFormat(self):
+        style = _REVERSE_STYLES[self.formatter._style.__class__]
+        fmt = self.formatter._style._fmt
+        data = {
+            "fmt": fmt,
+            "datefmt": self.formatter.datefmt,
+            "style": style,
+        }
+        self.send(b'\x00\x00\x00\x00')
+        self.sendtext(json.dumps(data))
 
 
 class UnixClient(SocketForwarder):
