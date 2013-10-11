@@ -5,7 +5,7 @@ import time
 import unittest
 from unittest import mock
 
-from .. import client, ProtocolError
+from .. import client, ProtocolError, VersionMismatchError
 from . import utils
 
 
@@ -17,6 +17,10 @@ class TestClient(utils.Patches, unittest.TestCase):
         super().setUp()
         self.s = client.SocketForwarder('test-host', 999,
                                         filename='test.log', maxBytes=1024)
+
+
+class TestClientBasics(TestClient):
+
     def test_create(self):
         self.assertEqual(self.s.host, 'test-host')
         self.assertEqual(self.s.port, 999)
@@ -122,6 +126,43 @@ class Test_Recv_Line(TestClient):
     def test_invalid_utf8(self):
         self.set_responses([b'\xC0', '\n'.encode('UTF-8')], False)
         self.assertRaises(ProtocolError, self.s.recv_line)
+
+
+class TestHandshakeFailures(TestClient):
+
+    def setUp(self):
+        super().setUp()
+        self.s.recv_line = mock.MagicMock()
+        self.s.sendtext = mock.MagicMock()
+
+    def set_resps(self, val):
+        self.s.recv_line.side_effect = list(val) + [AssertionError]
+    resps = property(fset=set_resps)
+
+    def force(self, error=None):
+        if error is None:
+            error = ProtocolError
+        self.assertRaises(error, self.s.createSocket)
+
+    def test_bad_hello(self):
+        self.resps = ['GARBAGE\n']
+        self.force()
+        self.s.sendtext.assert_called_once_with('HELLO 1.0\n')
+
+    def test_bad_hello_version(self):
+        self.resps = ['HELLO 2.0\n']
+        self.force(VersionMismatchError)
+        self.s.sendtext.assert_called_once_with('HELLO 1.0\n')
+
+    def test_bad_ok_1(self):
+        self.resps = ['HELLO 1.0\n', 'NOT OK\n']
+        self.force()
+        self.assertEqual(2, len(self.s.sendtext.call_args_list))
+
+    def test_bad_ok_2(self):
+        self.resps = ['HELLO 1.0\n', 'OK\n', 'NOT OK\n']
+        self.force()
+        self.assertEqual(3, len(self.s.sendtext.call_args_list))
 
 if __name__ == "__main__":
     unittest.main()
