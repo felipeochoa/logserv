@@ -9,6 +9,7 @@ handles each connection's state and file handler.
 import asyncore
 import json
 import pickle
+import socket
 import struct
 
 class LoggingChannel(asyncore.dispatcher):
@@ -174,10 +175,9 @@ class LogServer(asyncore.dispatcher):
         super().__init__()
         try:
             self.create_socket(self.socket_family, socket.SOCK_STREAM)
-            self.set_reuse_addr()
             self.bind(socket_path)
             self.listen(5)
-        except:
+        except:  # pragma: no cover
             self.close()
             raise
 
