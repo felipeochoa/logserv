@@ -79,7 +79,7 @@ but if you don't you have to be careful to specify the `host` argument
 for the client in terms of its working directory -- everything else is
 relative to the server.
 
-# TODO
+## TODO
 
 * Fix client transmission of Formatter params
 * expand test coverage (almost at 100%)
@@ -91,7 +91,7 @@ relative to the server.
 * expand protocol to allow client to select the handler class it wants
   to use.
 
-# Copyright
+## Copyright
 
 Copyright (c) 2013 Felipe Ochoa
 
