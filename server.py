@@ -129,9 +129,10 @@ class LoggingChannel(StrictDispatcher):
     def identify(self):
         msg = self.find_term()
         if msg is not None:
-            head, rest = msg.split(' ', 1)
+            head = msg.split(' ', 1)[0]
             if not head == 'IDENTIFY':
                 raise ProtocolError("'IDENTIFY'", head)
+            rest = msg.split(' ', 1)[1]  # This will never fail
             try:
                 params = json.loads(rest)
             except ValueError:
