@@ -12,6 +12,8 @@ import pickle
 import socket
 import struct
 
+from . import ProtocolError
+
 class StrictDispatcher(asyncore.dispatcher):
 
     # Forbid the "cheap inheritance"
