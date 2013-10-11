@@ -179,7 +179,7 @@ class TestStateTransitions(TestReading):
         super().setUp()
         for attr in ['welcome', 'identify', 'confirm_log',
                      'receive_header', 'receive_log', 'receive_msg',
-                     'format']:
+                     'format', 'alert_error']:
             setattr(self.c, attr,
                     mock.MagicMock(wraps=getattr(self.c, attr)))
 
@@ -268,11 +268,18 @@ class TestNormalTransitions(TestStateTransitions):
         self.c.receive_msg.assert_called_once_with()
         self.assertFalse(self.c.connected)
 
+    def test_raising_err(self):
+        self.c.dispatch_read = mock.MagicMock(side_effect=ProtocolError)
+        self.c.handle_read()
+        self.assertEqual(1, len(self.c.alert_error.call_args_list))
+        self.assertTrue(isinstance(self.c.alert_error.call_args[0][0],
+                                   ProtocolError))
+
 
 class TestProtocolErrors(TestStateTransitions):
 
     def force(self):
-        self.assertRaises(ProtocolError, self.c.handle_read)
+        self.assertRaises(ProtocolError, self.c.dispatch_read)
 
     def test_welcome(self):
         self.assertEqual(self.c.status, 'WELCOMING')

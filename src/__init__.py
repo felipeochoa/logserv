@@ -97,7 +97,7 @@ class LogServerError(Exception):
 
 class ProtocolError(LogServerError):
 
-    def __init__(self, expected, actual):
+    def __init__(self, expected='', actual=''):
         self.expected = expected
         self.actual = actual
         msg = "EXPECTED %s, received %s" % (expected, actual)

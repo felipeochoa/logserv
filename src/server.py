@@ -84,6 +84,12 @@ class LoggingChannel(StrictDispatcher):
         self.write_buf = self.write_buf[sent:]
 
     def handle_read(self):
+        try:
+            self.dispatch_read()
+        except ProtocolError as err:
+            self.alert_error(err)
+
+    def dispatch_read(self):
         if self.status == 'WELCOMING':
             self.welcome()
         elif self.status == 'IDENTIFYING':
@@ -219,6 +225,9 @@ class LoggingChannel(StrictDispatcher):
         formatter = logging.Formatter(fmt, datefmt, style=style)
         self.handler.setFormatter(formatter)
         self.write_buf = 'OK\n'
+
+    def alert_error(self, err):
+        self.write_buf = ('ERROR %s' % err.args[0]).encode('UTF-8')
 
     def close(self):
         super().close()
