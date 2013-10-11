@@ -243,7 +243,7 @@ class LogServer(StrictDispatcher):
 
     channel_class = LoggingChannel
     logging_map = {}
-    socket_family = socket.AF_UNIX
+    socket_family = socket.AF_INET
 
     def __init__(self, socket_path):
         super().__init__(map=self.logging_map)
