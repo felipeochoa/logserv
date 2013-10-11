@@ -24,9 +24,17 @@ class TestClientBasics(TestClient):
     def test_create(self):
         self.assertEqual(self.s.host, 'test-host')
         self.assertEqual(self.s.port, 999)
+        self.assertEqual(self.s.timeout, socket.getdefaulttimeout())
         self.assertEqual(self.s.kwargs, {'filename': 'test.log',
                                          'maxBytes': 1024})
         self.assertTrue(isinstance(self.s, logging.Handler))
+
+        s2 = client.SocketForwarder('test-host2', 1001, 10, mode='x')
+        self.assertEqual(s2.host, 'test-host2')
+        self.assertEqual(s2.port, 1001)
+        self.assertEqual(s2.timeout, 10)
+        self.assertEqual(s2.kwargs, {'mode': 'x'})
+        self.assertTrue(isinstance(s2, logging.Handler))
 
     def test_createSocket(self):
         self.s.doHandshake = mock.MagicMock()
