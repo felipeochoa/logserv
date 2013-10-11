@@ -70,13 +70,17 @@ class LoggingChannel(StrictDispatcher):
             elif term in data[:-1]:
                 raise ProtocolError("a single-line message",
                                     "%s in the client response" % term)
+            try:
+                resp = resp.decode('UTF-8')
+            except UnicodeDecodeError:
+                raise ProtocolError("a UTF-8 string", resp)
+            self.read_buf = []
             return resp
         return None
 
     def welcome(self):
         msg = self.find_term()
         if msg is not None:
-            msg = msg.decode('UTF-8')
             head, rest = msg.split(' ', 1)
             if head != 'HELLO':
                 raise ProtocolError("'HELLO\n'", msg)
@@ -89,7 +93,6 @@ class LoggingChannel(StrictDispatcher):
     def identify(self):
         msg = self.find_term()
         if msg is not None:
-            msg = msg.decode('UTF-8')
             head, rest = msg.split(' ', 1)
             if not head == 'IDENTIFY':
                 raise ProtocolError("'IDENTIFY'", head)
@@ -112,7 +115,6 @@ class LoggingChannel(StrictDispatcher):
     def set_format(self):
         msg = self.find_term()
         if msg is not None:
-            msg = msg.decode('UTF-8')
             head, rest = msg.split(' ')
             if head == 'LOG\n':  # rest is blank
                 self.status = 'LOG-HEADER'
@@ -133,7 +135,7 @@ class LoggingChannel(StrictDispatcher):
     def confirm_log(self):
         msg = self.find_term()
         if msg is not None:
-            if msg != 'LOG\n'.encode('UTF-8'):
+            if msg != 'LOG\n':
                 raise ProtocolError("'LOG\n'", msg)
             self.write_buf = 'OK\n'
             self.status = 'LOG-HEADER'
