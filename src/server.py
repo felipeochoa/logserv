@@ -246,7 +246,7 @@ class LogServer(StrictDispatcher):
     socket_family = socket.AF_UNIX
 
     def __init__(self, socket_path):
-        super().__init__()
+        super().__init__(map=self.logging_map)
         try:
             self.create_socket(self.socket_family, socket.SOCK_STREAM)
             self.bind(socket_path)
