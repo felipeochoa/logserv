@@ -81,6 +81,7 @@ relative to the server.
 
 # TODO
 
+* Fix client transmission of Formatter params
 * expand test coverage (almost at 100%)
 
   - test `client.SocketForwarder.sendFormat`

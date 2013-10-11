@@ -43,7 +43,6 @@ class SocketForwarder(logging.handlers.SocketHandler):
         """
         super().createSocket()
         self.doHandshake()
-        self.sendFormat()
 
     def sendtext(self, data):
         if isinstance(data, str):
