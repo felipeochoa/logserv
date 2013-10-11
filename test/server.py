@@ -57,11 +57,14 @@ class TestChannelBasic(TestChannel):
         self.assertFalse(self.c.readable())
 
 
-class TestReadLine(TestChannel):
+class TestReading(TestChannel):
 
     def setUp(self):
         super().setUp()
         self.c.recv = mock.MagicMock()
+        self.c.remaining = 10
+
+class TestReadline(TestReading):
 
     def test_single_read(self):
         self.c.recv.return_value = 'Test line\n'.encode('UTF-8')
@@ -107,12 +110,7 @@ class TestReadLine(TestChannel):
         self.assertRaises(ProtocolError, self.c.find_term)
 
 
-class TestReadByLen(TestChannel):
-
-    def setUp(self):
-        super().setUp()
-        self.c.recv = mock.MagicMock()
-        self.c.remaining = 10
+class TestReadByLen(TestReading):
 
     def test_single_read(self):
         self.c.recv.return_value = '1234567890'.encode('UTF-8')
