@@ -47,7 +47,7 @@ class TestChannelBasic(TestChannel):
         self.assertEqual(self.c.handler, None)
         self.assertEqual(self.c.read_buf, [])
         self.assertEqual(self.c.write_buf, b'')
-        self.assertEqual(self.c.remaining, len(struct.pack(">L", 99)))
+        self.assertEqual(self.c.remaining, 0)
 
     def test_read_write_state(self):
         self.assertTrue(self.c.readable())

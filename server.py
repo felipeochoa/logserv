@@ -51,11 +51,21 @@ class LoggingChannel(StrictDispatcher):
 
     def __init__(self, sock=None, map=None):
         super().__init__(sock, map)
-        self.status = 'WELCOMING'
+        self._status = 'WELCOMING'
         self.handler = None
         self.read_buf = []
         self.write_buf = b''
-        self.remaining = self.NUM_LEN_BYTES
+        self.remaining = 0
+
+    @property
+    def status(self):
+        return self._status
+
+    @status.setter
+    def status(self, val):
+        if val == 'LOG-HEADER':
+            self.remaining = self.NUM_LEN_BYTES
+        self._status = val
 
     def readable(self):
         return not self.write_buf
