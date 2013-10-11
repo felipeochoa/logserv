@@ -22,6 +22,29 @@ class StrictDispatcher(asyncore.dispatcher):
 
 class LoggingChannel(StrictDispatcher):
 
+    # The channel has 7 primary states in which it can be:
+    #
+    #   1. WELCOMING: initial state, awaiting Hello message
+    #   2. IDENTIFYING: awaiting IDENTIFY message
+    #   3. WAITING: awaiting LOG message
+    #   4. LOG-HEADER: awaiting a new log record, including length header
+    #   5. LOGGING: receiving body of a log record
+    #   6. MESSAGING: receiving a message during the main connection
+    #   7. CLOSED: not receiving any messages
+    #
+    #   State transition diagram:
+    #
+    #                          +--> 6
+    #                          |    |
+    #         1 --> 2 --> 3 --> 4 <--+
+    #                          |    |
+    #                          +--> 5
+    #
+    #      All states can go to state 7 as well
+    #
+    # In reality, the number of states is much greater since between many
+    # state transitions the server sends a message to the client.
+
     NUM_LEN_BYTES = 4
 
     def __init__(self, sock=None, map=None):
