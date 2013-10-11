@@ -86,3 +86,27 @@ class SocketForwarder(logging.handlers.SocketHandler):
         resp = self.recv_line()
         if resp != 'OK\n':
             raise ProtocolError("'OK\n'", resp)
+
+
+class UnixClient(SocketForwarder):
+
+    """
+    This client class connects through a Unix Domain Socket.
+
+    The `host` parameter must specify the path to the socket on the
+    filesystem.
+
+    Passing a value other than `None` for `port` constitutes an error.
+
+    """
+
+    def __init__(self, host, port=None, timeout=None, **kwargs):
+        if port is not None:
+            raise TypeError("port must be None for a UnixClient")
+        super().__init__(host, port, timeout, **kwargs)
+
+    def makeSocket(self, timeout=1):
+        s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        s.settimeout(timeout)
+        s.connect(self.host)
+        return s
