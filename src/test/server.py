@@ -193,6 +193,9 @@ class TestStateTransitions(TestReading):
 
 class TestNormalTransitions(TestStateTransitions):
 
+    TO_PATCH = TestStateTransitions.TO_PATCH
+    TO_PATCH['log-record'] = ('logging.makeLogRecord')
+
     def test_welcome(self):
         self.assertEqual(self.c.status, 'WELCOMING')
         self.eret = 'HELLO 1.0\n'
@@ -242,10 +245,10 @@ class TestNormalTransitions(TestStateTransitions):
     def test_receive_log(self):
         self.c.status = "LOGGING"
         record = object()  # new unique object
-        self.mocks['pickle'].return_value = record
         self.c.handler = mock.MagicMock()
         self.ret = b"a binary-format pickle..."
         self.c.remaining = len(b"a binary-format pickle...")
+        self.mocks['log-record'].return_value = record
         self.c.handle_read()
         self.c.receive_log.assert_called_once_with()
         self.c.handler.emit.assert_called_once_with(record)

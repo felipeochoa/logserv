@@ -191,9 +191,13 @@ class LoggingChannel(StrictDispatcher):
             self.status = 'LOG-HEADER'
             self.remaining = self.NUM_LEN_BYTES
             try:
-                log_record = pickle.loads(data)
+                log_dict = pickle.loads(data)
             except Exception as err:
                 raise ProtocolError("a valid pickled object", err.args)
+            try:
+                log_record = logging.makeLogRecord(log_dict)
+            except Exception:
+                raise ProtocolError("a pickled log-record dict", log_dict)
             else:
                 self.handler.emit(log_record)
 
