@@ -61,7 +61,7 @@ class LoggingChannel(StrictDispatcher):
             raise ValueError("self.status is %r" % self.status)
 
     def find_term(self, term='\n'.encode('UTF-8')):
-        data = self.recv(128)
+        data = self.recv(1024)
         self.read_buf.append(data)
         if term in data:
             resp = b''.join(self.read_buf)
