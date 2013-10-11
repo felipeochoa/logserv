@@ -13,6 +13,7 @@ import socket
 import struct
 
 from . import ProtocolError
+from logging.handlers import RotatingFileHandler
 
 class StrictDispatcher(asyncore.dispatcher):
 
@@ -48,6 +49,7 @@ class LoggingChannel(StrictDispatcher):
     # state transitions the server sends a message to the client.
 
     NUM_LEN_BYTES = 4
+    version = "1.0"
 
     def __init__(self, sock=None, map=None):
         super().__init__(sock, map)
@@ -133,9 +135,9 @@ class LoggingChannel(StrictDispatcher):
                 params = json.loads(rest)
             except ValueError:
                 raise ProtocolError("a JSON object", rest)
-            if 'lvl' not in params:
-                raise ProtocolError("a 'lvl' key", None)
-            level = params['lvl']
+            if '--level' not in params:
+                raise ProtocolError("a '--level' key", None)
+            level = params.pop('--level')
             try:
                 self.handler = RotatingFileHandler(**params)
             except TypeError as err:
@@ -186,7 +188,7 @@ class LoggingChannel(StrictDispatcher):
     def receive_header(self):
         data = self.receive_by_len()
         if data is not None:
-            slen = struct.unpack(">L", data)
+            slen = struct.unpack(">L", data)[0]
             if slen == 0:
                 return self.quit()
             self.remaining = slen
