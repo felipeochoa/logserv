@@ -19,7 +19,7 @@ from logging.handlers import RotatingFileHandler
 class StrictDispatcher(asyncore.dispatcher):
 
     # Forbid the "cheap inheritance"
-    def __getattr__(self, attr):
+    def __getattr__(self, attr):  # pragma: no cover
         raise AttributeError("%s object has no attribute '%s'" %
                              (self.__class__.__name__, attr))
 
@@ -95,7 +95,7 @@ class LoggingChannel(StrictDispatcher):
             self.receive_log()
         elif self.status == 'MESSAGING':
             self.receive_msg()
-        else:
+        else: # pragma: no cover
             raise ValueError("self.status is %r" % self.status)
 
     def find_term(self, term='\n'.encode('UTF-8')):
