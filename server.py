@@ -81,12 +81,10 @@ class LoggingChannel(StrictDispatcher):
     def welcome(self):
         msg = self.find_term()
         if msg is not None:
-            head, rest = msg.split(' ', 1)
+            head = msg.split(' ', 1)[0]
             if head != 'HELLO':
-                raise ProtocolError("'HELLO\n'", msg)
-            if rest != '1.0\n':
-                raise VersionMismatchError("Server does not support " +
-                                           "version %s" % rest)
+                raise ProtocolError("'HELLO'", msg)
+            # regardless of the client version, we just use 1.0
             self.write_buf = 'HELLO %s\n' % self.version
             self.status = 'IDENTIFYING'
 
