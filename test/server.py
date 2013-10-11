@@ -107,6 +107,39 @@ class TestReadLine(TestChannel):
         self.assertRaises(ProtocolError, self.c.find_term)
 
 
+class TestReadByLen(TestChannel):
+
+    def setUp(self):
+        super().setUp()
+        self.c.recv = mock.MagicMock()
+        self.c.remaining = 10
+
+    def test_single_read(self):
+        self.c.recv.return_value = '1234567890'.encode('UTF-8')
+        ret = self.c.receive_by_len()
+        self.assertEqual(ret, '1234567890'.encode('UTF-8'))
+        self.assertEqual(self.c.read_buf, [])
+        self.assertEqual(self.c.remaining, 0)
+
+    def test_multiple_reads(self):
+        self.c.recv.side_effect = ['123'.encode('UTF-8'),
+                                 '456'.encode('UTF-8'),
+                                 '7890'.encode('UTF-8')]
+        ret = self.c.receive_by_len()
+        self.assertEqual(ret, None)
+        self.assertEqual(self.c.read_buf, ['123'.encode('UTF-8')])
+        self.assertEqual(self.c.remaining, 7)
+        ret = self.c.receive_by_len()
+        self.assertEqual(ret, None)
+        self.assertEqual(self.c.read_buf, ['123'.encode('UTF-8'),
+                                           '456'.encode('UTF-8')])
+        self.assertEqual(self.c.remaining, 4)
+        ret = self.c.receive_by_len()
+        self.assertEqual(ret, '1234567890'.encode('UTF-8'))
+        self.assertEqual(self.c.read_buf, [])
+        self.assertEqual(self.c.remaining, 0)
+
+
 class TestWriting(TestChannel):
 
     def setUp(self):
