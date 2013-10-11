@@ -51,6 +51,7 @@ class LoggingChannel(StrictDispatcher):
 
     NUM_LEN_BYTES = 4
     version = "1.0"
+    handler_class = RotatingFileHandler
 
     def __init__(self, sock=None, map=None):
         super().__init__(sock, map)
@@ -141,10 +142,11 @@ class LoggingChannel(StrictDispatcher):
                 raise ProtocolError("a '--level' key", None)
             level = params.pop('--level')
             try:
-                self.handler = RotatingFileHandler(**params)
+                self.handler = self.handler_class(**params)
             except TypeError as err:
                 raise ProtocolError("valid parameters for "
-                                    "`RotatingFileHandler`", err.args[0])
+                                    "`%s`" % self.handler_class.__name__,
+                                    err.args[0])
             self.handler.setLevel(level)
             self.write_buf = 'OK\n'
             self.status = 'WAITING'

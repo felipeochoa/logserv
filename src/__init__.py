@@ -28,9 +28,8 @@ on the same pickle-based protocol used in SocketHandler:
 
   * <params> must contain the key '--level'
   * <params>['--level'] must be an acceptable argument for `setLevel`.
-  * The remaining keys in <params> are passed to the 'RotatingFileHandler'
-    constructor to create the handler that will accept the client's logging
-    requests.
+  * The remaining keys in <params> are passed to the handler constructor to
+    create the handler that will accept the client's logging requests.
 
   The server then responds with the message
 

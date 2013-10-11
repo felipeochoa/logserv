@@ -10,8 +10,8 @@ class SocketForwarder(logging.handlers.SocketHandler):
     """
     A `SocketHandler` subclass that converses with a log server.
 
-    Any extra keyword parameters are passed on to the `RotatingFileHandler`
-    on the other end of the socket.
+    Any extra keyword parameters are passed on to the handler on the other
+    end of the socket.
 
     All of the IO is performed blockingly, like in the parent class.
 
