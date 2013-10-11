@@ -36,11 +36,11 @@ class LoggingChannel(StrictDispatcher):
     #
     #   State transition diagram:
     #
-    #                          +--> 6
-    #                          |    |
+    #                           +--> 5
+    #                           |    |
     #         1 --> 2 --> 3 --> 4 <--+
-    #                          |    |
-    #                          +--> 5
+    #                           |    |
+    #                           +--> 6
     #
     #      All states can go to state 7 as well
     #
