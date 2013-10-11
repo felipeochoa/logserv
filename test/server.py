@@ -39,6 +39,9 @@ class TestChannel(utils.Patches, unittest.TestCase):
         self.map = {}
         self.c = server.LoggingChannel(mock.MagicMock(), self.map)
 
+
+class TestChannelBasic(TestChannel):
+
     def test_create(self):
         self.assertEqual(self.c.status, 'WELCOMING')
         self.assertEqual(self.c.handler, None)
