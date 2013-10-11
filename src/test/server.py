@@ -205,8 +205,11 @@ class TestNormalTransitions(TestStateTransitions):
         self.c.status = 'IDENTIFYING'
         self.eret = ('IDENTIFY {"--level": 0, "filename":' +
                      ' "test.log", "maxBytes": 10240}\n')
+        self.c.handler_class = mock.MagicMock()
         self.c.handle_read()
         self.c.identify.assert_called_once_with()
+        self.c.handler_class.assert_called_once_with(filename="test.log",
+                                                     maxBytes=10240)
         self.assertEqual(self.c.status, 'WAITING')
         self.assertEqual(self.c.write_buf, 'OK\n')
 
