@@ -268,5 +268,83 @@ class TestNormalTransitions(TestStateTransitions):
         self.assertFalse(self.c.connected)
 
 
+class TestProtocolErrors(TestStateTransitions):
+
+    def force(self):
+        self.assertRaises(ProtocolError, self.c.handle_read)
+
+    def test_welcome(self):
+        self.assertEqual(self.c.status, 'WELCOMING')
+        self.eret = 'GARBAGE\n'
+        self.force()
+
+    def test_identify_header(self):
+        self.c.status = 'IDENTIFYING'
+        self.eret = 'GARBAGE{data...}\n'
+        self.force()
+
+    def test_identify_no_data(self):
+        self.c.status = 'IDENTIFYING'
+        self.eret = 'IDENTIFY\n'
+        self.force()
+
+    def test_identify_json(self):
+        self.c.status = 'IDENTIFYING'
+        self.eret = 'IDENTIFY {NOT JSON!!}\n'
+        self.force()
+
+    def test_identify_json_not_dict(self):
+        self.c.status = 'IDENTIFYING'
+        self.eret = 'IDENTIFY [1, 2, 3]\n'
+        self.force()
+
+    def test_identify_data(self):
+        self.c.status = 'IDENTIFYING'
+        self.eret = 'IDENTIFY {"--level": 0, "not_a_param": 1}\n'
+        self.force()
+
+    def test_identify_no_level(self):
+        self.c.status = 'IDENTIFYING'
+        self.eret = 'IDENTIFY {"not_a_param": 1, "not_another_param": 3}\n'
+        self.force()
+
+    def test_waiting_bad_call(self):
+        self.c.status = 'WAITING'
+        self.eret = 'GARBAGE\n'
+        self.force()
+
+    def test_log_bad_pickle(self):
+        self.c.status = 'LOGGING'
+        self.c.remaining = 10
+        self.ret = b'1234567890'
+        self.mocks['pickle'].side_effect = pickle.UnpicklingError
+        self.force()
+
+    def test_bad_message_name(self):
+        self.c.status = 'MESSAGING'
+        self.eret = 'GARBAGE\n'
+        self.force()
+
+    def test_no_format_params(self):
+        self.c.status = 'MESSAGING'
+        self.eret = 'FORMAT\n'
+        self.force()
+
+    def test_bad_format_params(self):
+        self.c.status = 'MESSAGING'
+        self.eret = 'FORMAT {NOT JSON!}\n'
+        self.force()
+
+    def test_invalid_format_params(self):
+        self.c.status = 'MESSAGING'
+        self.eret = 'FORMAT {"not_an_arg": 3}\n'
+        self.force()
+
+    def test_format_params_not_json_dict(self):
+        self.c.status = 'MESSAGING'
+        self.eret = 'FORMAT [3, 4]\n'
+        self.force()
+
+
 if __name__ == "__main__":
     unittest.main()
