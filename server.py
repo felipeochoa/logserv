@@ -12,7 +12,15 @@ import pickle
 import socket
 import struct
 
-class LoggingChannel(asyncore.dispatcher):
+class StrictDispatcher(asyncore.dispatcher):
+
+    # Forbid the "cheap inheritance"
+    def __getattr__(self, attr):
+        raise AttributeError("%s object has no attribute '%s'" %
+                             (self.__class__.__name__, attr))
+
+
+class LoggingChannel(StrictDispatcher):
 
     NUM_LEN_BYTES = 4
 
@@ -165,7 +173,7 @@ class LoggingChannel(asyncore.dispatcher):
         self.close()
 
 
-class LogServer(asyncore.dispatcher):
+class LogServer(StrictDispatcher):
 
     channel_class = LoggingChannel
     logging_map = {}
@@ -183,8 +191,3 @@ class LogServer(asyncore.dispatcher):
 
     def handle_accepted(self, conn, addr):
         self.channel_class(conn, self.logging_map)
-
-    # Forbid the "cheap inheritance"
-    def __getattr__(self, attr):
-        raise AttributeError("%s object has no attribute '%s'" %
-                             (self.__class__.__name__, attr))
