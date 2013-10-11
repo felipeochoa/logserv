@@ -1,8 +1,6 @@
-import json
 import logging
-import socket
+import pickle
 import struct
-import time
 import unittest
 from unittest import mock
 
