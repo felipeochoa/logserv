@@ -174,5 +174,99 @@ class TestWriting(TestChannel):
         self.assertTrue(self.c.writable())
 
 
+class TestStateTransitions(TestReading):
+
+    def setUp(self):
+        self.TO_PATCH['pickle'] = 'pickle.loads'
+        super().setUp()
+        for attr in ['welcome', 'identify', 'confirm_log',
+                     'receive_header', 'receive_log', 'receive_msg',
+                     'format']:
+            setattr(self.c, attr,
+                    mock.MagicMock(wraps=getattr(self.c, attr)))
+
+    def set_return_value(self, val):
+        self.c.recv.return_value = val
+    ret = property(fset=set_return_value)
+    def encode_set_return_value(self, val):
+        self.ret = val.encode('UTF-8')
+    eret = property(fset=encode_set_return_value)
+
+
+class TestNormalTransitions(TestStateTransitions):
+
+    def test_welcome(self):
+        self.assertEqual(self.c.status, 'WELCOMING')
+        self.eret = 'HELLO 1.0\n'
+        self.c.handle_read()
+        self.c.welcome.assert_called_once_with()
+        self.assertEqual(self.c.status, 'IDENTIFYING')
+        self.assertEqual(self.c.write_buf, 'HELLO 1.0\n')
+
+    def test_identify(self):
+        self.c.status = 'IDENTIFYING'
+        self.eret = ('IDENTIFY {"--level": 0, "filename":' +
+                     ' "test.log", "maxBytes": 10240}\n')
+        self.c.handle_read()
+        self.c.identify.assert_called_once_with()
+        self.assertEqual(self.c.status, 'WAITING')
+        self.assertEqual(self.c.write_buf, 'OK\n')
+
+    def test_waiting(self):
+        self.c.status = 'WAITING'
+        self.eret = "LOG\n"
+        self.c.handle_read()
+        self.c.confirm_log.assert_called_once_with()
+        self.assertEqual(self.c.status, 'LOG-HEADER')
+        self.assertEqual(self.c.write_buf, 'OK\n')
+
+    def test_log_header_to_log(self):
+        self.c.status = 'LOG-HEADER'
+        self.ret = b"\x00\x00\x00\x0A"
+        self.c.handle_read()
+        self.c.receive_header.assert_called_once_with()
+        self.assertEqual(self.c.status, 'LOGGING')
+        self.assertEqual(self.c.write_buf, b'')
+
+    def test_log_header_to_message(self):
+        self.c.status = 'LOG-HEADER'
+        self.assertEqual(self.c.remaining, len(struct.pack(">L", 99)))
+        self.ret = b"\x00\x00\x00\x00"
+        self.c.handle_read()
+        self.c.receive_header.assert_called_once_with()
+        self.assertEqual(self.c.remaining, 0)
+        self.assertEqual(self.c.status, 'MESSAGING')
+        self.assertEqual(self.c.write_buf, b'')
+
+    def test_receive_log(self):
+        self.c.status = "LOGGING"
+        record = object()  # new unique object
+        self.mocks['pickle'].return_value = record
+        self.c.handler = mock.MagicMock()
+        self.ret = b"a binary-format pickle..."
+        self.c.remaining = len(b"a binary-format pickle...")
+        self.c.handle_read()
+        self.c.receive_log.assert_called_once_with()
+        self.c.handler.emit.assert_called_once_with(record)
+        self.assertEqual(self.c.write_buf, b'')
+
+    def test_receive_format_msg(self):
+        self.c.status = 'MESSAGING'
+        self.c.handler = logging.Handler()
+        self.eret = 'FORMAT {"fmt": "%(message)s"}\n'
+        self.c.handle_read()
+        self.c.receive_msg.assert_called_once_with()
+        self.c.format.assert_called_once_with(fmt='%(message)s')
+        self.assertEqual(self.c.write_buf, 'OK\n')
+
+    def test_receive_quit_msg(self):
+        self.c.status = 'MESSAGING'
+        self.c.handler = logging.Handler()
+        self.eret = 'QUIT\n'
+        self.c.handle_read()
+        self.c.receive_msg.assert_called_once_with()
+        self.assertFalse(self.c.connected)
+
+
 if __name__ == "__main__":
     unittest.main()
