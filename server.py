@@ -86,14 +86,14 @@ class LoggingChannel(StrictDispatcher):
             self.welcome()
         elif self.status == 'IDENTIFYING':
             self.identify()
-        elif self.status == 'FORMATTING':
-            self.set_format()
         elif self.status == 'WAITING':
             self.confirm_log()
         elif self.status == 'LOG-HEADER':
             self.receive_header()
         elif self.status == 'LOGGING':
             self.receive_log()
+        elif self.status == 'MESSAGING':
+            self.receive_msg()
         else:
             raise ValueError("self.status is %r" % self.status)
 
@@ -145,7 +145,7 @@ class LoggingChannel(StrictDispatcher):
                                     "`RotatingFileHandler`", err.args[0])
             self.handler.setLevel(level)
             self.write_buf = 'OK\n'
-            self.status = 'FORMATTING'
+            self.status = 'WAITING'
 
     def set_format(self):
         msg = self.find_term()
@@ -190,9 +190,10 @@ class LoggingChannel(StrictDispatcher):
         if data is not None:
             slen = struct.unpack(">L", data)[0]
             if slen == 0:
-                return self.quit()
+                self.status = 'MESSAGING'
+            else:
+                self.status = 'LOGGING'
             self.remaining = slen
-            self.status = 'LOGGING'
 
     def receive_log(self):
         data = self.receive_by_len()
